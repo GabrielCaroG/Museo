@@ -1,0 +1,28 @@
+<script src="https://aframe.io/releases/1.7.0/aframe.min.js"></script>
+
+<a-scene>
+  <a-assets>
+    <img id="groundTexture" src="https://cdn.aframe.io/a-painter/images/floor.jpg">
+    <img id="skyTexture" src="https://cdn.aframe.io/a-painter/images/sky.jpg">
+  </a-assets>
+
+  <a-cylinder id="ground" src="#groundTexture" radius="30" height="0.1"></a-cylinder>
+  <a-sky id="background" src="#skyTexture" theta-length="90" radius="30"></a-sky>
+
+  <!-- LUZ AMBIENTE -->
+   <a-entity light="type: point; intensity: 75; color: #ffffff; distance: 50"
+            position="0 15 -10"></a-entity>
+
+  <!-- LUZ DIRECCIONAL (como el sol) -->
+  <a-entity light="type: directional; color: #ffffff; intensity: 0.8; castShadow: true"
+            position="0 10 5"
+            rotation="-45 0 0"></a-entity>
+
+  <!-- MODELO 3D -->
+  <a-entity
+    gltf-model="https://raw.githubusercontent.com/GabrielCaroG/modelo3d/main/compressed_1754279309330_Museo.glb"
+    position="0 0 -3"
+    scale="1 1 1"
+    rotation="0 0 0"
+  ></a-entity>
+</a-scene>
