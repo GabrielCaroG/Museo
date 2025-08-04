@@ -1,28 +1,196 @@
-<script src="https://aframe.io/releases/1.7.0/aframe.min.js"></script>
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Capitán Cubillos y Cruz - Animaciones</title>
 
-<a-scene>
-  <a-assets>
-    <img id="groundTexture" src="https://cdn.aframe.io/a-painter/images/floor.jpg">
-    <img id="skyTexture" src="https://cdn.aframe.io/a-painter/images/sky.jpg">
-  </a-assets>
+    <!-- A-Frame core -->
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+    <!-- Extras -->
+    <script src="https://cdn.jsdelivr.net/npm/aframe-extras@6.1.1/dist/aframe-extras.min.js"></script>
 
-  <a-cylinder id="ground" src="#groundTexture" radius="30" height="0.1"></a-cylinder>
-  <a-sky id="background" src="#skyTexture" theta-length="90" radius="30"></a-sky>
+    <style>
+      #playBtn {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        padding: 10px 20px;
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        font-size: 16px;
+        cursor: pointer;
+        z-index: 10;
+      }
+    </style>
 
-  <!-- LUZ AMBIENTE -->
-   <a-entity light="type: point; intensity: 75; color: #ffffff; distance: 50"
-            position="0 15 -10"></a-entity>
+    <script>
+      AFRAME.registerComponent('move-horizontal', {
+        schema: { speed: { type: 'number', default: 2 } },
+        init: function () {
+          this.startTime = null;
+          this.running = false;
+        },
+        play: function () {
+          this.running = true;
+          this.startTime = null;
+        },
+        pause: function () {
+          this.running = false;
+        },
+        tick: function (time, deltaTime) {
+          if (!this.running) return;
+          if (!this.startTime) this.startTime = time;
+          const elapsed = time - this.startTime;
+          if (elapsed < 13000) {
+            const moveAmount = (this.data.speed * deltaTime) / 1000;
+            this.el.object3D.position.x += moveAmount;
+          }
+        }
+      });
+    </script>
+  </head>
+  <body>
+    <!-- Botón para reproducir -->
+    <button id="playBtn">Reproducir</button>
 
-  <!-- LUZ DIRECCIONAL (como el sol) -->
-  <a-entity light="type: directional; color: #ffffff; intensity: 0.8; castShadow: true"
-            position="0 10 5"
-            rotation="-45 0 0"></a-entity>
+    <a-scene>
+      <a-assets>
+        <img id="skyTexture" src="https://cdn.aframe.io/a-painter/images/sky.jpg">
+        <a-asset-item id="cubillos" src="https://raw.githubusercontent.com/GabrielCaroG/modelo3d/main/CapitanCubillos.glb"></a-asset-item>
+        <a-asset-item id="escenario" src="https://raw.githubusercontent.com/GabrielCaroG/modelo3d/main/Escenario.glb"></a-asset-item>
+        <a-asset-item id="cruz" src="https://raw.githubusercontent.com/GabrielCaroG/modelo3d/main/Cruz.glb"></a-asset-item>
+      </a-assets>
+      
+      <a-sky id="background" src="#skyTexture" theta-length="90" radius="55"></a-sky>
 
-  <!-- MODELO 3D -->
-  <a-entity
-    gltf-model="https://raw.githubusercontent.com/GabrielCaroG/modelo3d/main/compressed_1754279309330_Museo.glb"
-    position="0 0 -3"
-    scale="1 1 1"
-    rotation="0 0 0"
-  ></a-entity>
-</a-scene>
+      <a-entity gltf-model="#escenario" position="0 0 0" scale="2 2 2"></a-entity>
+
+      <a-entity id="cubillo-wrapper" position="0 0 0">
+        <a-entity id="cubillo"
+                  gltf-model="#cubillos"
+                  scale="1.6 1.6 1.6"
+                  rotation="0 0 0">
+        </a-entity>
+      </a-entity>
+
+      <a-entity id="cruz-actor"
+                gltf-model="#cruz"
+                scale="1.6 1.6 1.6"
+                position="-5 0 -5"
+                rotation="0 -90 0">
+      </a-entity>
+
+      <!-- Cielo -->
+      <a-sky color="#88ccee"></a-sky>
+    </a-scene>
+
+    <script>
+      const wrapper = document.querySelector('#cubillo-wrapper');
+      const cubillo = document.querySelector('#cubillo');
+      const cruz = document.querySelector('#cruz-actor');
+      const playBtn = document.getElementById('playBtn');
+
+      let cruzMover = null;
+
+      function resetScene() {
+        // Detener cualquier animación o intervalo anterior
+        if (cruzMover) {
+          clearInterval(cruzMover);
+          cruzMover = null;
+        }
+
+        // Resetear posiciones y rotaciones
+        wrapper.setAttribute('position', { x: 0, y: 0, z: 0 });
+        cruz.setAttribute('position', { x: -5, y: 0, z: -5 });
+        cruz.setAttribute('rotation', { x: 0, y: -90, z: 0 });
+
+        // Resetear animaciones
+        wrapper.removeAttribute('move-horizontal');
+        cubillo.removeAttribute('animation-mixer');
+        cruz.removeAttribute('animation-mixer');
+      }
+
+      playBtn.addEventListener('click', () => {
+        resetScene();
+
+        // Iniciar movimiento horizontal después de reinicio limpio
+        setTimeout(() => {
+          wrapper.setAttribute('move-horizontal', 'speed: 3');
+
+          cubillo.setAttribute('animation-mixer', {
+            clip: 'Walk',
+            loop: 'repeat',
+            clampWhenFinished: false
+          });
+        }, 50);
+
+        setTimeout(() => {
+          wrapper.removeAttribute('move-horizontal');
+          cubillo.setAttribute('animation-mixer', {
+            clip: 'Shoot',
+            loop: 'once',
+            clampWhenFinished: true
+          });
+        }, 13000);
+
+        setTimeout(() => {
+          cubillo.setAttribute('animation-mixer', {
+            clip: 'IDLE',
+            loop: 'repeat',
+            clampWhenFinished: false
+          });
+        }, 17000);
+
+        setTimeout(() => {
+          cruz.setAttribute('animation-mixer', {
+            clip: 'Cambio',
+            loop: 'once',
+            clampWhenFinished: true
+          });
+
+          setTimeout(() => {
+            const pos = cruz.getAttribute('position');
+
+            cruz.setAttribute('rotation', { x: 0, y: -270, z: 0 });
+            cruz.setAttribute('position', { x: pos.x - 1, y: pos.y, z: pos.z });
+
+            cruz.setAttribute('animation-mixer', {
+              clip: 'run',
+              loop: 'repeat',
+              clampWhenFinished: false
+            });
+
+            let elapsed = 0;
+            const interval = 16;
+            const speed = 6;
+            const moveStep = (speed * interval) / 1000;
+
+            cruzMover = setInterval(() => {
+              const current = cruz.getAttribute('position');
+              cruz.setAttribute('position', {
+                x: current.x + moveStep,
+                y: current.y,
+                z: current.z
+              });
+
+              elapsed += interval;
+              if (elapsed >= 2500) {
+                clearInterval(cruzMover);
+                cruzMover = null;
+                cruz.setAttribute('animation-mixer', {
+                  clip: 'muerte',
+                  loop: 'once',
+                  clampWhenFinished: true
+                });
+                cruz.setAttribute('rotation', { x: 0, y: -270, z: 0 });
+              }
+            }, interval);
+          }, 2633);
+        }, 8000);
+      });
+    </script>
+  </body>
+</html>
+
