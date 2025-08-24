@@ -1,5 +1,4 @@
-  <a-cylinder id="ground" src="#groundTexture" radius="30" height="0.1"></a-cylinder>
-  <a-sky id="background" src="#skyTexture" theta-length="90" radius="30"></a-sky><script src="https://aframe.io/releases/1.7.0/aframe.min.js"></script>
+<script src="https://aframe.io/releases/1.7.0/aframe.min.js"></script>
 
 <a-scene>
   <a-assets>
@@ -7,12 +6,11 @@
     <img id="skyTexture" src="https://cdn.aframe.io/a-painter/images/sky.jpg">
   </a-assets>
 
-  <a-cylinder id="ground" src="#groundTexture" radius="30" height="0.1"></a-cylinder>
-  <a-sky id="background" src="#skyTexture" theta-length="90" radius="30"></a-sky>
+  <a-cylinder id="ground" src="#groundTexture" radius="175" height="0.1"></a-cylinder>
+  <a-sky id="background" src="#skyTexture" theta-length="90" radius="175"></a-sky>
 
-  <!-- LUZ AMBIENTE -->
-   <a-entity light="type: point; intensity: 75; color: #ffffff; distance: 50"
-            position="0 15 -10"></a-entity>
+  <!-- CONTENEDOR DE LUCES -->
+  <a-entity id="lights"></a-entity>
 
   <!-- LUZ DIRECCIONAL (como el sol) -->
   <a-entity light="type: directional; color: #ffffff; intensity: 0.8; castShadow: true"
@@ -21,9 +19,101 @@
 
   <!-- MODELO 3D -->
   <a-entity
-    gltf-model="https://raw.githubusercontent.com/GabrielCaroG/modelo3d/main/compressed_1754279309330_Museo.glb"
+    gltf-model="https://raw.githubusercontent.com/GabrielCaroG/modelo3d/main/Museo.glb"
     position="0 0 -3"
     scale="1 1 1"
     rotation="0 0 0"
   ></a-entity>
+
+  <!-- RIG + CÁMARA -->
+  <a-entity id="rig" movement-controls position="0 1.6 0">
+    <!-- Cámara principal -->
+    <a-entity 
+      id="playerCamera"
+      camera 
+      look-controls="pointerLockEnabled: true" 
+      wasd-controls 
+      position="0 0 0">
+    </a-entity>
+    
+    <!-- Controladores de manos para VR (Quest) -->
+    <a-entity oculus-touch-controls="hand: left"></a-entity>
+    <a-entity oculus-touch-controls="hand: right"></a-entity>
+  </a-entity>
 </a-scene>
+
+<!-- CONTROLES PARA CELULAR -->
+<div id="mobile-controls" style="display:none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 999;">
+  <button class="ctrl-btn" id="btn-forward">▲</button><br>
+  <button class="ctrl-btn" id="btn-left">◀</button>
+  <button class="ctrl-btn" id="btn-backward">▼</button>
+  <button class="ctrl-btn" id="btn-right">▶</button>
+</div>
+
+<style>
+  .ctrl-btn {
+    width: 60px;
+    height: 60px;
+    font-size: 24px;
+    border-radius: 50%;
+    border: none;
+    margin: 5px;
+    background: rgba(0,0,0,0.5);
+    color: white;
+  }
+  .ctrl-btn:active {
+    background: rgba(255,255,255,0.7);
+    color: black;
+  }
+</style>
+
+<script>
+  // -------- Luces distribuidas en el área --------
+  const lightsContainer = document.querySelector('#lights');
+  const spacing = 50;   // distancia entre luces
+  const radius = 175;   // radio del suelo
+  const y = 15;         // altura de las luces
+
+  for (let x = -radius; x <= radius; x += spacing) {
+    for (let z = -radius; z <= radius; z += spacing) {
+      if (Math.sqrt(x*x + z*z) <= radius) {
+        const light = document.createElement('a-entity');
+        light.setAttribute('light', {
+          type: 'point',
+          intensity: 30,
+          color: '#ffffff',
+          distance: 60
+        });
+        light.setAttribute('position', `${x} ${y} ${z}`);
+        lightsContainer.appendChild(light);
+      }
+    }
+  }
+
+  // -------- Mostrar controles solo en móvil --------
+  function isMobile() {
+    return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  }
+
+  if (isMobile()) {
+    document.getElementById('mobile-controls').style.display = 'block';
+  }
+
+  const rig = document.getElementById('rig');
+  const speed = 0.5; // velocidad movimiento (ajústala a gusto)
+
+  // Mover el rig con botones táctiles
+  function moveRig(dx, dz) {
+    const pos = rig.getAttribute('position');
+    rig.setAttribute('position', {
+      x: pos.x + dx,
+      y: pos.y,
+      z: pos.z + dz
+    });
+  }
+
+  document.getElementById('btn-forward').addEventListener('touchstart', () => moveRig(0, -speed));
+  document.getElementById('btn-backward').addEventListener('touchstart', () => moveRig(0, speed));
+  document.getElementById('btn-left').addEventListener('touchstart', () => moveRig(-speed, 0));
+  document.getElementById('btn-right').addEventListener('touchstart', () => moveRig(speed, 0));
+</script>
