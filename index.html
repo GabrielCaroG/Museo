@@ -12,7 +12,7 @@
   <!-- CONTENEDOR DE LUCES -->
   <a-entity id="lights"></a-entity>
 
-  <!-- LUZ DIRECCIONAL (como el sol) -->
+  <!-- LUZ DIRECCIONAL -->
   <a-entity light="type: directional; color: #ffffff; intensity: 0.8; castShadow: true"
             position="0 10 5"
             rotation="-45 0 0"></a-entity>
@@ -31,19 +31,20 @@
     <a-entity 
       id="playerCamera"
       camera 
-      look-controls="pointerLockEnabled: true" 
-      wasd-controls
+      look-controls
       position="0 0 0">
     </a-entity>
 
     <!-- Controlador izquierdo (teletransporte con trigger) -->
     <a-entity 
+      id="leftHand"
       hand-controls="hand: left; handModelStyle: lowPoly; color: #FF0000"
       teleport-controls="cameraRig: #rig; button: trigger; collisionEntities: #ground">
     </a-entity>
 
-    <!-- Controlador derecho (solo mano visible) -->
+    <!-- Controlador derecho (snap-turn con joystick) -->
     <a-entity 
+      id="rightHand"
       hand-controls="hand: right; handModelStyle: lowPoly; color: #0000FF">
     </a-entity>
   </a-entity>
@@ -75,11 +76,11 @@
 </style>
 
 <script>
-  // -------- Luces distribuidas en el área --------
+  // -------- Luces distribuidas --------
   const lightsContainer = document.querySelector('#lights');
-  const spacing = 50;   // distancia entre luces
-  const radius = 175;   // radio del suelo
-  const y = 15;         // altura de las luces
+  const spacing = 50;
+  const radius = 175;
+  const y = 15;
 
   for (let x = -radius; x <= radius; x += spacing) {
     for (let z = -radius; z <= radius; z += spacing) {
@@ -107,9 +108,8 @@
   }
 
   const rig = document.getElementById('rig');
-  const speed = 0.5; // velocidad movimiento (ajústala a gusto)
+  const speed = 0.5; 
 
-  // Mover el rig con botones táctiles
   function moveRig(dx, dz) {
     const pos = rig.getAttribute('position');
     rig.setAttribute('position', {
@@ -123,4 +123,26 @@
   document.getElementById('btn-backward').addEventListener('touchstart', () => moveRig(0, speed));
   document.getElementById('btn-left').addEventListener('touchstart', () => moveRig(-speed, 0));
   document.getElementById('btn-right').addEventListener('touchstart', () => moveRig(speed, 0));
+
+  // -------- Snap-turn con joystick derecho --------
+  const rightHand = document.getElementById('rightHand');
+  const turnAngle = 30; // grados por giro
+  let lastTurn = 0;
+
+  rightHand.addEventListener('axismove', (e) => {
+    const x = e.detail.axis[2]; // joystick derecho eje X
+    const y = e.detail.axis[3]; // joystick derecho eje Y
+    const now = Date.now();
+
+    // Snap turn con joystick derecho
+    if (Math.abs(x) > 0.7 && now - lastTurn > 500) {
+      const rot = rig.getAttribute('rotation');
+      rig.setAttribute('rotation', {
+        x: rot.x,
+        y: rot.y + (x > 0 ? -turnAngle : turnAngle),
+        z: rot.z
+      });
+      lastTurn = now;
+    }
+  });
 </script>
