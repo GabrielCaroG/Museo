@@ -22,23 +22,30 @@
     gltf-model="https://raw.githubusercontent.com/GabrielCaroG/modelo3d/main/Museo.glb"
     position="0 0 -3"
     scale="1 1 1"
-    rotation="0 0 0"
-  ></a-entity>
+    rotation="0 0 0">
+  </a-entity>
 
   <!-- RIG + CÁMARA -->
-  <a-entity id="rig" movement-controls position="0 1.6 0">
+  <a-entity id="rig" movement-controls="fly: false" position="0 1.6 0">
     <!-- Cámara principal -->
     <a-entity 
       id="playerCamera"
       camera 
       look-controls="pointerLockEnabled: true" 
-      wasd-controls 
+      wasd-controls
       position="0 0 0">
     </a-entity>
-    
-    <!-- Controladores de manos para VR (Quest) -->
-    <a-entity oculus-touch-controls="hand: left"></a-entity>
-    <a-entity oculus-touch-controls="hand: right"></a-entity>
+
+    <!-- Controlador izquierdo (teletransporte con trigger) -->
+    <a-entity 
+      hand-controls="hand: left; handModelStyle: lowPoly; color: #FF0000"
+      teleport-controls="cameraRig: #rig; button: trigger; collisionEntities: #ground">
+    </a-entity>
+
+    <!-- Controlador derecho (solo mano visible) -->
+    <a-entity 
+      hand-controls="hand: right; handModelStyle: lowPoly; color: #0000FF">
+    </a-entity>
   </a-entity>
 </a-scene>
 
