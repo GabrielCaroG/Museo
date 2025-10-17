@@ -1,96 +1,370 @@
-<!-- Librería de A-Frame -->
-<script src="https://aframe.io/releases/1.7.0/aframe.min.js"></script>
+<!-- Fila principal -->
+    <a-entity gltf-model="url(https://cdn.jsdelivr.net/gh/GabrielCaroG/modelo3d@main/21.glb)" scale="1 2 1" position="-65.6 1.5 -68.2" rotation="270 -90 0"></a-entity>
+    <a-entity gltf-model="url(https://cdn.jsdelivr.net/gh/GabrielCaroG/modelo3d@main/22.glb)" scale="1 2 1" position="-60.6 1.5 -68.2" rotation="270 -90 0"></a-entity>
+    <a-entity gltf-model="url(https://cdn.jsdelivr.net/gh/GabrielCaroG/modelo3d@main/23.glb)" scale="1 2 1" position="-55.6 1.5 -68.2" rotation="270 -90 0"></a-entity>
+    <a-entity gltf-model="url(https://cdn.jsdelivr.net/gh/GabrielCaroG/modelo3d@main/24.glb)" scale="1 2 1" position="-50.5 1.5 -68.2" rotation="190 180 0"></a-entity>
+    <a-entity gltf-model="url(https://cdn.jsdelivr.net/gh/GabrielCaroG/modelo3d@main/25.glb)" scale="1 2 1" position="-45.5 1.5 -68.2" rotation="270 -90 0"></a-entity>
+    <a-entity gltf-model="url(https://cdn.jsdelivr.net/gh/GabrielCaroG/modelo3d@main/26.glb)" scale="1 2 1" position="-40.3 1.5 -68.2" rotation="270 90 0"></a-entity>
+    <a-entity gltf-model="url(https://cdn.jsdelivr.net/gh/GabrielCaroG/modelo3d@main/27.glb)" scale="1 2 1" position="-35 1.5 -68.2" rotation="270 90 0"></a-entity>
+    <a-entity gltf-model="url(https://cdn.jsdelivr.net/gh/GabrielCaroG/modelo3d@main/28.glb)" scale="1 2 1" position="-30 1.5 -68.2" rotation="0 180 50"></a-entity>
+    <a-entity gltf-model="url(https://cdn.jsdelivr.net/gh/GabrielCaroG/modelo3d@main/29.glb)" scale="1 2 1" position="-25.3 1.5 -68.2" rotation="270 90 0"></a-entity>
+    <a-entity gltf-model="url(https://cdn.jsdelivr.net/gh/GabrielCaroG/modelo3d@main/30.glb)" scale="1 2 1" position="-20.6 1.5 -68.2" rotation="0 180 90"></a-entity>
+    <a-entity gltf-model="url(https://cdn.jsdelivr.net/gh/GabrielCaroG/modelo3d@main/31.glb)" scale="1 2 1" position="-16.5 1.5 -68.2" rotation="180 -180 90"></a-entity>
+    <a-entity gltf-model="url(https://cdn.jsdelivr.net/gh/GabrielCaroG/modelo3d@main/32.glb)" scale="1 2 1" position="-11.8 1.5 -68.2" rotation="0 180 90"></a-entity>
+    <a-entity gltf-model="url(https://cdn.jsdelivr.net/gh/GabrielCaroG/modelo3d@main/33.glb)" scale="1 2 1" position="-9.9 1.5 -65" rotation="-90 180 45"></a-entity>
 
-<a-scene xr-mode-ui="enabled: true" vr-mode-ui="enabled: true">
-  <!-- ===========================================
-       📌 ASSETS
-  ============================================ -->
+    <!-- Nuevos objetos añadidos -->
+    <a-entity gltf-model="url(https://cdn.jsdelivr.net/gh/GabrielCaroG/modelo3d@main/34.glb)" scale="1 2 1" position="-9.9 1.5 -59.7" rotation="20 290 60"></a-entity>
+    <a-entity gltf-model="url(https://cdn.jsdelivr.net/gh/GabrielCaroG/modelo3d@main/35.glb)" scale="1 2 1" position="-9.9 2.0 -55.2" rotation="20 290 180"></a-entity>
+    <a-entity gltf-model="url(https://cdn.jsdelivr.net/gh/GabrielCaroG/modelo3d@main/38.glb)" scale="1 2 1" position="-9.9 2.0 -51.2" rotation="0 180 0"></a-entity><script src="https://aframe.io/releases/1.7.0/aframe.min.js"></script>
+<script src="https://aframe.io/releases/1.7.0/aframe.min.js"></script>
+<script>
+  AFRAME.registerComponent('gaze-animate', {
+    schema: {
+      scaleFactor: { type: 'number', default: 1.5 },
+      rotDegPerSec: { type: 'number', default: 80 },
+      lift: { type: 'number', default: 0.5 },   // cuánto sube en Y
+      delay: { type: 'number', default: 2000 }  // tiempo de espera antes de volver (ms)
+    },
+
+    init: function () {
+      const s = this.el.getAttribute('scale');
+      const p = this.el.getAttribute('position');
+      const r = this.el.getAttribute('rotation');
+
+      this.originalScale = { x: (s && s.x) || 1, y: (s && s.y) || 1, z: (s && s.z) || 1 };
+      this.originalPos   = { x: (p && p.x) || 0, y: (p && p.y) || 0, z: (p && p.z) || 0 };
+      this.originalRot   = { x: (r && r.x) || 0, y: (r && r.y) || 0, z: (r && r.z) || 0 };
+
+      this.isActive = false;
+      this.rotSpeed = (this.data.rotDegPerSec * Math.PI) / 180;
+
+      this._onEnter = this.onEnter.bind(this);
+      this._onLeave = this.onLeave.bind(this);
+
+      this.leaveTimeout = null;
+
+      this.el.addEventListener('mouseenter', this._onEnter);
+      this.el.addEventListener('mouseleave', this._onLeave);
+    },
+
+    onEnter: function () {
+      if (this.leaveTimeout) {
+        clearTimeout(this.leaveTimeout);
+        this.leaveTimeout = null;
+      }
+
+      if (this.isActive) return;
+      this.isActive = true;
+
+      const nx = this.originalScale.x * this.data.scaleFactor;
+      const ny = this.originalScale.y * this.data.scaleFactor;
+      const nz = this.originalScale.z * this.data.scaleFactor;
+
+      const px = this.originalPos.x;
+      const py = this.originalPos.y + this.data.lift;
+      const pz = this.originalPos.z;
+
+      // limpiar animaciones previas
+      this.el.removeAttribute('animation__scale_down');
+      this.el.removeAttribute('animation__scale_up');
+      this.el.removeAttribute('animation__pos_down');
+      this.el.removeAttribute('animation__pos_up');
+      this.el.removeAttribute('animation__rot_down');
+
+      // animación de escala
+      this.el.setAttribute('animation__scale_up', {
+        property: 'scale',
+        to: `${nx} ${ny} ${nz}`,
+        dur: 300,
+        easing: 'easeOutQuad'
+      });
+
+      // animación de posición
+      this.el.setAttribute('animation__pos_up', {
+        property: 'position',
+        to: `${px} ${py} ${pz}`,
+        dur: 300,
+        easing: 'easeOutQuad'
+      });
+    },
+
+    onLeave: function () {
+      if (!this.isActive) return;
+      this.leaveTimeout = setTimeout(() => {
+        this.isActive = false;
+
+        const ox = this.originalScale.x;
+        const oy = this.originalScale.y;
+        const oz = this.originalScale.z;
+
+        const px = this.originalPos.x;
+        const py = this.originalPos.y;
+        const pz = this.originalPos.z;
+
+        const rx = this.originalRot.x;
+        const ry = this.originalRot.y;
+        const rz = this.originalRot.z;
+
+        this.el.removeAttribute('animation__scale_up');
+        this.el.removeAttribute('animation__scale_down');
+        this.el.removeAttribute('animation__pos_up');
+        this.el.removeAttribute('animation__pos_down');
+        this.el.removeAttribute('animation__rot_down');
+
+        // volver escala original
+        this.el.setAttribute('animation__scale_down', {
+          property: 'scale',
+          to: `${ox} ${oy} ${oz}`,
+          dur: 300,
+          easing: 'easeOutQuad'
+        });
+
+        // volver posición original
+        this.el.setAttribute('animation__pos_down', {
+          property: 'position',
+          to: `${px} ${py} ${pz}`,
+          dur: 300,
+          easing: 'easeOutQuad'
+        });
+
+        // volver rotación original
+        this.el.setAttribute('animation__rot_down', {
+          property: 'rotation',
+          to: `${rx} ${ry} ${rz}`,
+          dur: 300,
+          easing: 'easeOutQuad'
+        });
+      }, this.data.delay); // espera antes de ejecutar
+    },
+
+    tick: function (time, timeDelta) {
+      if (!this.isActive) return;
+      const rot = this.el.object3D.rotation;
+      const step = this.rotSpeed * (timeDelta / 1000);
+      rot.y += step;   // giro horizontal
+      rot.x += step * 0.5; // giro diagonal (ajusta el factor si quieres más/menos inclinación)
+    },
+
+    remove: function () {
+      this.el.removeEventListener('mouseenter', this._onEnter);
+      this.el.removeEventListener('mouseleave', this._onLeave);
+      if (this.leaveTimeout) clearTimeout(this.leaveTimeout);
+    }
+  });
+
+  document.addEventListener('DOMContentLoaded', function () {
+    const list = document.querySelectorAll('#objetos-museo [gltf-model], #objetos-museo a-entity[gltf-model]');
+    list.forEach(el => {
+      el.classList.add('interactivo');
+      el.setAttribute('gaze-animate', '');
+    });
+  });
+</script>
+
+<script>
+  function crearLuzT(pos, rot) {
+    const wrapper = document.createElement('a-entity');
+    wrapper.setAttribute('position', `${pos.x} ${pos.y} ${pos.z}`);
+    wrapper.setAttribute('rotation', `${rot.x} ${rot.y} ${rot.z}`);
+
+    // Modelo
+    const modelo = document.createElement('a-entity');
+    modelo.setAttribute('gltf-model', 'https://raw.githubusercontent.com/GabrielCaroG/modelo3d/main/LuzT.glb');
+    modelo.setAttribute('scale', '1 1 1');
+    modelo.setAttribute('rotation', '0 0 0');
+
+    // Luz
+    const luz = document.createElement('a-entity');
+    luz.setAttribute('light', 'type: point; color: #ffffff; intensity: 5; distance: 10');
+    luz.setAttribute('position', '0 2.5 -11');
+
+    wrapper.appendChild(modelo);
+    wrapper.appendChild(luz);
+
+    return wrapper;
+  }
+
+  // 👇 Ya NO se crea nada automático
+  // Tú decides cuándo y dónde añadirlo:
+  // const scene = document.querySelector('a-scene');
+  // const luzT = crearLuzT({x: 0, y: 0, z: 0}, {x: 0, y: 0, z: 0});
+  // scene.appendChild(luzT);
+</script>
+<a-scene>
   <a-assets>
-    <img id="groundTexture" src="https://cdn.aframe.io/a-painter/images/floor.jpg">
-    <img id="skyTexture" src="https://cdn.aframe.io/a-painter/images/sky.jpg">
+    <img id="groundTexture" src="https://cdn.aframe.io/a-painter/images/floor.jpg" />
+    <img id="skyTexture" src="https://cdn.aframe.io/a-painter/images/sky.jpg" />
   </a-assets>
 
-  <!-- ===========================================
-       📌 CÁMARA Y RIG DEL JUGADOR
-  ============================================ -->
-  <a-entity id="rig" position="0 1.6 0" joystick-movement>
-    <!-- Cámara principal con controles -->
+  <!-- Cámara con movimiento WASD y cursor -->
+  <a-entity id="rig" position="0 1.6 0">
     <a-entity 
-      id="playerCamera"
-      camera
+      camera 
+      look-controls 
       wasd-controls
-      look-controls="pointerLockEnabled: true"
       position="0 0 0">
-      
-      <!-- Luz anclada al observador -->
-      <a-entity 
-        light="type: point; color: #ffffff; intensity: 5; distance: 7.5">
-      </a-entity>
-    </a-entity>
 
-    <!-- Controladores VR -->
-    <a-entity id="leftHand" oculus-touch-controls="hand: left"></a-entity>
-    <a-entity id="rightHand" oculus-touch-controls="hand: right"></a-entity>
+      <!-- Cursor oficial -->
+      <a-cursor
+        raycaster="objects: .interactivo"
+        fuse="false"
+        geometry="primitive: ring; radiusInner: 0.01; radiusOuter: 0.02"
+        material="color: white; shader: flat">
+      </a-cursor>
+      <!-- Luz anclada a la cámara -->
+      <a-entity light="type: point; color: #ffffff; intensity: 3; distance: 10"></a-entity>
+    </a-entity>
   </a-entity>
 
-  <!-- ===========================================
-       📌 ENTORNO
-  ============================================ -->
-  <a-cylinder 
-    id="ground" 
-    src="#groundTexture" 
-    radius="175" 
-    height="0.1">
-  </a-cylinder>
+  <!-- Piso -->
+  <a-cylinder
+    id="ground"
+    src="#groundTexture"
+    radius="175"
+    height="0.1"
+  ></a-cylinder>
 
-  <a-sky 
-    id="background" 
-    src="#skyTexture" 
-    theta-length="90" 
-    radius="175">
-  </a-sky>
+  <!-- Cielo -->
+  <a-sky
+    id="background"
+    src="#skyTexture"
+    theta-length="90"
+    radius="175"
+  ></a-sky>
 
-  <!-- ===========================================
-       📌 LUCES
-  ============================================ -->
-  <a-entity id="lights"></a-entity>
-
-  <!-- Luz direccional (como el sol) -->
-  <a-entity 
+  <!-- Luz direccional -->
+  <a-entity
     light="type: directional; color: #ffffff; intensity: 0.8; castShadow: true"
     position="0 10 5"
-    rotation="-45 0 0">
-  </a-entity>
+    rotation="-45 0 0"
+  ></a-entity>
 
-  <!-- ===========================================
-       📌 MODELOS 3D
-  ============================================ -->
+  <!-- Modelo principal Museo -->
   <a-entity
     gltf-model="https://raw.githubusercontent.com/GabrielCaroG/modelo3d/main/Museo.glb"
     position="0 0 -3"
     scale="1 1 1"
-    rotation="0 0 0">
+    rotation="0 0 0"
+  ></a-entity>
+  <a-light type="point" color="#ffffff" intensity="5" distance="15" position="0 5 -1"></a-light>
+
+  </a-entity>
+
+  <!-- Objetos del museo agrupados -->
+  <a-entity id="objetos-museo" position="0 0 0">
+    <!-- Modelos 1 a 38 -->
+<a-entity gltf-model="url(https://cdn.jsdelivr.net/gh/GabrielCaroG/modelo3d@main/1.glb)"
+        scale="1 2 1" position="-10 1.7 -41.4"></a-entity>
+<a-entity gltf-model="url(https://cdn.jsdelivr.net/gh/GabrielCaroG/modelo3d@main/2.glb)"
+        scale="1 2 1" position="-10 1.7 -37" rotation="20 290 -20"></a-entity>
+<a-entity gltf-model="url(https://cdn.jsdelivr.net/gh/GabrielCaroG/modelo3d@main/3.glb)"
+        scale="1 2 1" position="-10 1.5 -32.7" rotation="275 0 50"></a-entity>
+<a-entity gltf-model="url(https://cdn.jsdelivr.net/gh/GabrielCaroG/modelo3d@main/4.glb)"
+        scale="1 2 1" position="-15.2 1.5 -32.7" rotation="275 0 280"></a-entity>
+<a-entity gltf-model="url(https://cdn.jsdelivr.net/gh/GabrielCaroG/modelo3d@main/5.glb)"
+        scale="1 2 1" position="-20.5 1.3 -32.7" rotation="275 0 280"></a-entity>
+<a-entity gltf-model="url(https://cdn.jsdelivr.net/gh/GabrielCaroG/modelo3d@main/6.glb)"
+        scale="1 2 1" position="-26.5 1.5 -32.7" rotation="275 0 280"></a-entity>
+<a-entity gltf-model="url(https://cdn.jsdelivr.net/gh/GabrielCaroG/modelo3d@main/7.glb)"
+        scale="1 2 1" position="-32.2 1.3 -32.7" rotation="275 0 280"></a-entity>
+<a-entity gltf-model="url(https://cdn.jsdelivr.net/gh/GabrielCaroG/modelo3d@main/8.glb)"
+        scale="1 2 1" position="-37.9 1.5 -32.7" rotation="275 0 280"></a-entity>
+<a-entity gltf-model="url(https://cdn.jsdelivr.net/gh/GabrielCaroG/modelo3d@main/9.glb)"
+        scale="1 2 1" position="-44 1.5 -32.7" rotation="0 0 -290"></a-entity>
+<a-entity gltf-model="url(https://cdn.jsdelivr.net/gh/GabrielCaroG/modelo3d@main/10.glb)"
+        scale="1 2 1" position="-50 1.5 -32.7" rotation="275 0 100"></a-entity>
+<a-entity gltf-model="url(https://cdn.jsdelivr.net/gh/GabrielCaroG/modelo3d@main/11.glb)"
+        scale="1 2 1" position="-55.6 1.5 -32.7" rotation="275 0 100"></a-entity>
+<a-entity gltf-model="url(https://cdn.jsdelivr.net/gh/GabrielCaroG/modelo3d@main/12.glb)"
+        scale="1 2 1" position="-60.4 1.5 -32.7" rotation="275 0 100"></a-entity>
+<a-entity gltf-model="url(https://cdn.jsdelivr.net/gh/GabrielCaroG/modelo3d@main/13.glb)"
+        scale="1 2 1" position="-65.6 1.5 -32.7" rotation="275 0 100"></a-entity>
+<a-entity gltf-model="url(https://cdn.jsdelivr.net/gh/GabrielCaroG/modelo3d@main/14.glb)"
+        scale="1 2 1" position="-68.6 1.3 -36" rotation="275 0 270"></a-entity>
+<a-entity gltf-model="url(https://cdn.jsdelivr.net/gh/GabrielCaroG/modelo3d@main/15.glb)"
+        scale="1 2 1" position="-68.6 1.5 -40.8" rotation="275 0 20"></a-entity>
+<a-entity gltf-model="url(https://cdn.jsdelivr.net/gh/GabrielCaroG/modelo3d@main/16.glb)"
+        scale="1 2 1" position="-68.6 1.8 -45.6" rotation="180 -90 0"></a-entity>
+<a-entity gltf-model="url(https://cdn.jsdelivr.net/gh/GabrielCaroG/modelo3d@main/17.glb)"
+        scale="1 2 1" position="-68.6 1.3 -50" rotation="275 0 20"></a-entity>
+<a-entity gltf-model="url(https://cdn.jsdelivr.net/gh/GabrielCaroG/modelo3d@main/18.glb)"
+        scale="1 2 1" position="-68.6 1.5 -55.2" rotation="275 0 100"></a-entity>
+<a-entity gltf-model="url(https://cdn.jsdelivr.net/gh/GabrielCaroG/modelo3d@main/19.glb)"
+        scale="1 2 1" position="-68.6 1.5 -60" rotation="275 0 0"></a-entity>
+<a-entity gltf-model="url(https://cdn.jsdelivr.net/gh/GabrielCaroG/modelo3d@main/20.glb)"
+        scale="1 2 1" position="-68.6 1.5 -65" rotation="0 0 100"></a-entity>
+<a-entity gltf-model="url(https://cdn.jsdelivr.net/gh/GabrielCaroG/modelo3d@main/21.glb)"
+        scale="1 2 1" position="-65.6 1.5 -68.2" rotation="270 -90 0"></a-entity>
+<a-entity gltf-model="url(https://cdn.jsdelivr.net/gh/GabrielCaroG/modelo3d@main/22.glb)"
+        scale="1 2 1" position="-60.6 1.5 -68.2" rotation="270 -90 0"></a-entity>
+<a-entity gltf-model="url(https://cdn.jsdelivr.net/gh/GabrielCaroG/modelo3d@main/23.glb)"
+        scale="1 2 1" position="-55.6 1.5 -68.2" rotation="270 -90 0"></a-entity>
+<a-entity gltf-model="url(https://cdn.jsdelivr.net/gh/GabrielCaroG/modelo3d@main/24.glb)"
+        scale="1 2 1" position="-50.5 1.5 -68.2" rotation="190 180 0"></a-entity>
+<a-entity gltf-model="url(https://cdn.jsdelivr.net/gh/GabrielCaroG/modelo3d@main/25.glb)"
+        scale="1 2 1" position="-45.5 1.5 -68.2" rotation="270 -90 0"></a-entity>
+<a-entity gltf-model="url(https://cdn.jsdelivr.net/gh/GabrielCaroG/modelo3d@main/26.glb)"
+        scale="1 2 1" position="-40.3 1.5 -68.2" rotation="270 90 0"></a-entity>
+<a-entity gltf-model="url(https://cdn.jsdelivr.net/gh/GabrielCaroG/modelo3d@main/27.glb)"
+        scale="1 2 1" position="-35 1.5 -68.2" rotation="270 90 0"></a-entity>
+<a-entity gltf-model="url(https://cdn.jsdelivr.net/gh/GabrielCaroG/modelo3d@main/28.glb)"
+        scale="1 2 1" position="-30 1.5 -68.2" rotation="0 180 50"></a-entity>
+<a-entity gltf-model="url(https://cdn.jsdelivr.net/gh/GabrielCaroG/modelo3d@main/29.glb)"
+        scale="1 2 1" position="-25.3 1.5 -68.2" rotation="270 90 0"></a-entity>
+<a-entity gltf-model="url(https://cdn.jsdelivr.net/gh/GabrielCaroG/modelo3d@main/30.glb)"
+        scale="1 2 1" position="-20.6 1.5 -68.2" rotation="0 180 90"></a-entity>
+<a-entity gltf-model="url(https://cdn.jsdelivr.net/gh/GabrielCaroG/modelo3d@main/31.glb)"
+        scale="1 2 1" position="-16.5 1.5 -68.2" rotation="180 -180 90"></a-entity>
+<a-entity gltf-model="url(https://cdn.jsdelivr.net/gh/GabrielCaroG/modelo3d@main/32.glb)"
+        scale="1 2 1" position="-11.8 1.5 -68.2" rotation="0 180 90"></a-entity>
+<a-entity gltf-model="url(https://cdn.jsdelivr.net/gh/GabrielCaroG/modelo3d@main/33.glb)"
+        scale="1 2 1" position="-9.9 1.5 -64.8" rotation="-90 180 45"></a-entity>
+<a-entity gltf-model="url(https://cdn.jsdelivr.net/gh/GabrielCaroG/modelo3d@main/34.glb)"
+        scale="1 2 1" position="-9.9 1.5 -59.7" rotation="20 290 60"></a-entity>
+<a-entity gltf-model="url(https://cdn.jsdelivr.net/gh/GabrielCaroG/modelo3d@main/35.glb)"
+        scale="1 2 1" position="-9.9 2.0 -55.2" rotation="20 290 180"></a-entity>
+<a-entity gltf-model="url(https://cdn.jsdelivr.net/gh/GabrielCaroG/modelo3d@main/36.glb)"
+        scale="1 2 1" position="-9.9 2.0 -53.2" rotation="0 180 0"></a-entity>
+<a-entity gltf-model="url(https://cdn.jsdelivr.net/gh/GabrielCaroG/modelo3d@main/37.glb)"
+        scale="1 2 1" position="-9.9 2.0 -52.2" rotation="0 180 0"></a-entity>
+<a-entity gltf-model="url(https://cdn.jsdelivr.net/gh/GabrielCaroG/modelo3d@main/38.glb)"
+        scale="1 2 1" position="-9.9 2.0 -51.2" rotation="0 180 0"></a-entity>
   </a-entity>
 </a-scene>
-
 <script>
-  // Componente para capturar el joystick de los mandos de Quest
-  AFRAME.registerComponent('joystick-movement', {
-    tick: function () {
-      const rig = this.el;
-      const left = rig.querySelector('#leftHand').components['oculus-touch-controls'];
-      const right = rig.querySelector('#rightHand').components['oculus-touch-controls'];
-
-      if (left && left.controller && left.controller.gamepad) {
-        const [x, y] = left.controller.gamepad.axes; // joystick izquierdo
-        rig.object3D.position.x -= x * 0.1;
-        rig.object3D.position.z -= y * 0.1;
-      }
-
-      if (right && right.controller && right.controller.gamepad) {
-        const [rx] = right.controller.gamepad.axes; // joystick derecho X
-        rig.object3D.rotation.y -= rx * 0.05;
-      }
-    }
-  });
+  // Solo si el <a-scene> ya está en el DOM (ej. pegas esto justo después del <a-scene>)
+  document.querySelector('a-scene').appendChild(
+    crearLuzT({ x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: 0 })
+  );
+</script>
+<script>
+  // Solo si el <a-scene> ya está en el DOM (ej. pegas esto justo después del <a-scene>)
+  document.querySelector('a-scene').appendChild(
+    crearLuzT({ x: 0, y: 0, z: -15 }, { x: 0, y: 0, z: 0 })
+  );
+</script>
+<script>
+  // Solo si el <a-scene> ya está en el DOM (ej. pegas esto justo después del <a-scene>)
+  document.querySelector('a-scene').appendChild(
+    crearLuzT({ x: 0, y: 0, z: -30 }, { x: 0, y: 0, z: 0 })
+  );
+</script>
+<script>
+  // Solo si el <a-scene> ya está en el DOM (ej. pegas esto justo después del <a-scene>)
+  document.querySelector('a-scene').appendChild(
+    crearLuzT({ x: 0, y: 0, z: -45 }, { x: 0, y: 0, z: 0 })
+  );
+</script>
+<script>
+  // Solo si el <a-scene> ya está en el DOM (ej. pegas esto justo después del <a-scene>)
+  document.querySelector('a-scene').appendChild(
+    crearLuzT({ x: 11, y: 0, z: -35.85 }, { x: 0, y: 0, z: 0 })
+  );
+</script>
+<script>
+  // Solo si el <a-scene> ya está en el DOM (ej. pegas esto justo después del <a-scene>)
+  document.querySelector('a-scene').appendChild(
+    crearLuzT({ x: -11, y: 0, z: -35.85 }, { x: 0, y: 0, z: 0 })
+  );
 </script>
