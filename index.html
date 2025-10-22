@@ -1,4 +1,4 @@
-<!-- Fila principal -->
+​https://raw.githubusercontent.com/GabrielCaroG/modelo3d/main/MUSEO.glb<!-- Fila principal -->
     <a-entity gltf-model="url(https://cdn.jsdelivr.net/gh/GabrielCaroG/modelo3d@main/21.glb)" scale="1 2 1" position="-65.6 1.5 -68.2" rotation="270 -90 0"></a-entity>
     <a-entity gltf-model="url(https://cdn.jsdelivr.net/gh/GabrielCaroG/modelo3d@main/22.glb)" scale="1 2 1" position="-60.6 1.5 -68.2" rotation="270 -90 0"></a-entity>
     <a-entity gltf-model="url(https://cdn.jsdelivr.net/gh/GabrielCaroG/modelo3d@main/23.glb)" scale="1 2 1" position="-55.6 1.5 -68.2" rotation="270 -90 0"></a-entity>
@@ -333,39 +333,59 @@
   </a-entity>
 </a-scene>
 <script>
-  // Solo si el <a-scene> ya está en el DOM (ej. pegas esto justo después del <a-scene>)
-  document.querySelector('a-scene').appendChild(
-    crearLuzT({ x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: 0 })
-  );
-</script>
-<script>
-  // Solo si el <a-scene> ya está en el DOM (ej. pegas esto justo después del <a-scene>)
-  document.querySelector('a-scene').appendChild(
-    crearLuzT({ x: 0, y: 0, z: -15 }, { x: 0, y: 0, z: 0 })
-  );
-</script>
-<script>
-  // Solo si el <a-scene> ya está en el DOM (ej. pegas esto justo después del <a-scene>)
-  document.querySelector('a-scene').appendChild(
-    crearLuzT({ x: 0, y: 0, z: -30 }, { x: 0, y: 0, z: 0 })
-  );
-</script>
-<script>
-  // Solo si el <a-scene> ya está en el DOM (ej. pegas esto justo después del <a-scene>)
-  document.querySelector('a-scene').appendChild(
-    crearLuzT({ x: 0, y: 0, z: -45 }, { x: 0, y: 0, z: 0 })
-  );
-</script>
-<script>
-  // Solo si el <a-scene> ya está en el DOM (ej. pegas esto justo después del <a-scene>)
-  document.querySelector('a-scene').appendChild(
-    crearLuzT({ x: 11, y: 0, z: -35.85 }, { x: 0, y: 0, z: 0 })
-  );
-</script>
-<script>
-  // Solo si el <a-scene> ya está en el DOM (ej. pegas esto justo después del <a-scene>)
-  document.querySelector('a-scene').appendChild(
-    crearLuzT({ x: -11, y: 0, z: -35.85 }, { x: 0, y: 0, z: 0 })
-  );
-</script>
 
+  // Espera a que el <a-scene> esté cargado
+
+  window.addEventListener("load", () => {
+
+    const scene = document.querySelector("a-scene");
+
+    // Lista de posiciones de luz
+
+    const posiciones = [
+
+      { x: 0, y: 0, z: 0 },
+
+      { x: 0, y: 0, z: -19 },
+
+      { x: 0, y: 0, z: -38 },
+
+      { x: 0, y: 0, z: -60 },
+
+      { x: -19, y: 0, z: -46.85 },
+
+      { x: -38, y: 0, z: -46.85 },
+
+      { x: -57, y: 0, z: -46.85 },
+
+      { x: -38, y: 0, z: -28 },
+
+      { x: -19, y: 0, z: -28 },
+
+      { x: -57, y: 0, z: -28 },
+
+      { x: -15, y: 0, z: -69 },
+
+      { x: 15, y: 0, z: -69},
+
+      { x: 0, y: 0, z: -69 },
+
+      { x: 10, y: 0, z: -36},
+
+      { x: 20, y: 0, z: -36 },
+
+      { x: 30, y: 0, z: -36 }
+
+    ];
+
+    // Crea una luz para cada posición
+
+    posiciones.forEach(pos => {
+
+      scene.appendChild(crearLuzT(pos, { x: 0, y: 0, z: 0 }));
+
+    });
+
+  });
+
+</script>
